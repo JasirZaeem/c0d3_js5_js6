@@ -7,7 +7,7 @@ const cities = {}; // Store location and visits to it
 const getVisitorList = () =>
   Object.entries(cities).reduce(
     (listItems, [city, visitors]) =>
-      listItems + `<li><h2>${city} - ${visitors}</h2></li>`,
+      listItems + `<li><h3>${city} - ${visitors}</h3></li>`,
     ""
   );
 
@@ -31,7 +31,7 @@ router.get("/visitors", async (req, res) => {
 
   return res.send(`
     <h1>You are visiting from ${location}</h1>
-    <h3>${JSON.stringify(data)}</h3>
+    <h2>${location}</h2>
     <div id="googleMap" style="width: 100%; height: 500px; position: relative; overflow: hidden;"></div>
     <div>
       <h1>The cities our visitors come from</h1>
