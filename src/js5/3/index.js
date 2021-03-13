@@ -17,7 +17,7 @@ const getImage = async (src) => {
   if (Object.keys(imageCache).length > 10) {
     const expired = Object.entries(imageCache).reduce(
       (expiredKey, [key, { timestamp }]) =>
-        imageCache[expiredKey] < timestamp ? expiredKey : key,
+        imageCache[expiredKey].timestamp < timestamp ? expiredKey : key,
       src // Start with newest Image key
     );
     delete imageCache[expired];
