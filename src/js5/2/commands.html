@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Commands</title>
+  </head>
+  <body>
+    <h1>Enter command</h1>
+    <h2>Allowed commands</h2>
+    <ul>
+      <li><h3>ls</h3></li>
+      <li><h3>pwd</h3></li>
+      <li><h3>cat</h3></li>
+    </ul>
+    <label for="command">Command </label>
+    <input type="text" class="command" name="command" />
+    <button type="button" class="run">Run</button>
+
+    <hr />
+
+    <pre class="output"></pre>
+    <script>
+      const commandInput = document.querySelector(".command");
+      const output = document.querySelector(".output");
+      const run = document.querySelector(".run");
+
+      commandInput.focus();
+      const sendCommand = () => {
+        const value = commandInput.value;
+        if (!value) {
+          return;
+        }
+        fetch("/js5/2/commands/api", {
+          method: "POST",
+          headers: {
+            "content-type": "application/json",
+          },
+          body: JSON.stringify({
+            command: value,
+          }),
+        })
+          .then((r) => r.json())
+          .then((data) => {
+            output.innerText = data.error
+              ? JSON.stringify(data.error)
+              : data.output;
+            commandInput.value = "";
+            output.style.color = data.error ? "red" : "black";
+          });
+      };
+      commandInput.addEventListener("keyup", (e) => {
+        if (e.key === "Enter") {
+          sendCommand();
+        }
+      });
+
+      run.addEventListener("click", sendCommand);
+    </script>
+  </body>
+</html>
