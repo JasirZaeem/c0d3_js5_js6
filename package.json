@@ -1,0 +1,20 @@
+{
+  "name": "367139e231",
+  "version": "1.0.0",
+  "description": "Freedomains.dev site",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@freedomains.dev:/home/myproxy/367139e231.freedomains.dev"
+  },
+  "author": "367139e231",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.17.1",
+    "node-fetch": "^2.6.1"
+  }
+}
