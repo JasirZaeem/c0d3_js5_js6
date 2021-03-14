@@ -41,7 +41,7 @@ router.post("/files", upload.array("assets[]"), (req, res) => {
     return {
       jobid: id,
       filename: originalname,
-      url: `${req.hostname}/api/jobs/${id}`,
+      url: `${req.hostname}/js5/7/api/jobs/${id}`,
     };
   });
   return res.status(202).json({ jobs: jobsSpawned });
