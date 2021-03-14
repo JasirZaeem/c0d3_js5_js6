@@ -4,7 +4,7 @@ const Tesseract = require("tesseract.js");
 const { v4: uuid } = require("uuid");
 const fs = require("fs").promises;
 
-const EXPIRATION_DURATION = 1000 * 60 * 5; // Milliseconds in 5 minutes
+const EXPIRATION_DURATION = 5 * 1000 * 60; // Milliseconds in 5 minutes
 const jobs = {};
 
 const router = express.Router();
@@ -31,6 +31,7 @@ router.post("/files", upload.array("userFiles"), (req, res) => {
   const jobsSpawned = req.files.map(({ path, originalname }) => {
     const id = uuid();
     const job = {
+      id,
       path,
       filename: originalname,
       status: "pending",
