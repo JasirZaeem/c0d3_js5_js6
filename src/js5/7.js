@@ -27,7 +27,7 @@ const doJob = async (job) => {
   }
 };
 
-router.post("/files", upload.array("assets[]"), (req, res) => {
+router.post("/files", upload.array("userFiles"), (req, res) => {
   const jobsSpawned = req.files.map(({ path, originalname }) => {
     const id = uuid();
     const job = {
