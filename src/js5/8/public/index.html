@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Selfie Queen</title>
+    <style>
+      .image-container {
+        display: flex;
+        flex-wrap: wrap;
+      }
+
+      .image-container > img {
+        margin: 8px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Webcam</h1>
+    <video width="640" height="480"></video>
+    <br />
+    <button>Snap!</button>
+    <hr />
+    <h2>Taken Images</h2>
+    <div class="image-container"></div>
+
+    <script>
+      const IMAGE_ENDPOINT = "/js5/8/images";
+      const IMAGE_API_ENDPOINT = "/js5/8/api/images";
+      const video = document.querySelector("video");
+      const imageContainer = document.querySelector(".image-container");
+
+      let cameraStarted = false;
+      const canvas = document.createElement("canvas");
+      canvas.width = 640;
+      canvas.height = 480;
+      const ctx = canvas.getContext("2d");
+
+      navigator.mediaDevices.getUserMedia({ video: true }).then((stream) => {
+        video.srcObject = stream;
+        cameraStarted = true;
+        video.onloadedmetadata = video.play;
+      });
+
+      const getImageFromId = (id) => {
+        const image = document.createElement("img");
+        image.width = 320;
+        image.height = 240;
+        image.src = `${IMAGE_ENDPOINT}/${id}.png`;
+        return image;
+      };
+      document.querySelector("button").addEventListener("click", async () => {
+        if (!cameraStarted) return;
+
+        ctx.drawImage(video, 0, 0);
+        const imageData = canvas
+          .toDataURL()
+          .replace("data:image/png;base64,", "");
+
+        const response = await fetch(IMAGE_API_ENDPOINT, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ imageData }),
+        });
+        const { id } = await response.json();
+
+        imageContainer.append(getImageFromId(id));
+      });
+
+      // Start up app
+      (async () => {
+        const response = await fetch(IMAGE_API_ENDPOINT);
+        const { images } = await response.json();
+        imageContainer.append(...images.map(getImageFromId));
+      })();
+    </script>
+  </body>
+</html>
