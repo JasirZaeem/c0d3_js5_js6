@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <title>MemeChat</title>
+  <style>
+      .image-container {
+          display: flex;
+          flex-wrap: wrap;
+      }
+
+      .image-container > img {
+          margin: 8px;
+      }
+
+      .login {
+          display: none;
+      }
+
+      .app {
+          display: none;
+      }
+
+      .image-container > img {
+          width: 320px;
+          height: 240px;
+      }
+  </style>
+</head>
+<body>
+<div class="login">
+  <h2>
+    <label>
+      Enter Username
+      <input id="username"/>
+    </label>
+  </h2>
+  <button type="button" id="login">login</button>
+</div>
+
+<div class="app">
+  <h1>Webcam</h1>
+  <video width="640" height="480"></video>
+  <br/>
+  <label for="meme">meme</label><input id="meme"/>
+  <button type="button" class="snap">Snap!</button>
+  <hr/>
+  <h2>Memes</h2>
+  <div class="image-container"></div>
+</div>
+
+<script>
+  const login = document.querySelector(".login");
+  const app = document.querySelector(".app");
+
+  let oldUsers = {};
+  let users = {};
+  const IMAGE_ENDPOINT = "/js5/9/images";
+  const USERS_ENDPOINT = "/js5/9/api/users";
+  const video = document.querySelector("video");
+  const imageContainer = document.querySelector(".image-container");
+
+  let cameraStarted = false;
+  const canvas = document.createElement("canvas");
+  canvas.width = 640;
+  canvas.height = 480;
+  const ctx = canvas.getContext("2d");
+
+  const getImageFromUser = (user) => {
+    const oldSrc =
+      oldUsers[user] && `${IMAGE_ENDPOINT}/${user}.png?${oldUsers[user]}`;
+    const newSrc = `${IMAGE_ENDPOINT}/${user}.png?${users[user]}`;
+    const img = document.createElement("img");
+    img.src = oldSrc || newSrc;
+    if (oldSrc && oldSrc !== newSrc) {
+      const cacheImage = new Image();
+      cacheImage.src = newSrc;
+      cacheImage.onload = () => {
+        img.src = newSrc;
+      };
+    }
+    return img;
+  };
+  document.querySelector(".snap").addEventListener("click", async () => {
+    if (!cameraStarted) return;
+
+    const meme = document.querySelector("#meme").value.trim();
+    if (!meme) return;
+
+    console.log("sending");
+
+    ctx.drawImage(video, 0, 0);
+    const imageData = canvas
+      .toDataURL()
+      .replace("data:image/png;base64,", "");
+
+    fetch(USERS_ENDPOINT, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({imageData, meme}),
+    });
+  });
+
+  document.querySelector("#login").addEventListener("click", async () => {
+    const user = document.querySelector("#username").value.trim();
+
+    if (!user) return;
+    document.cookie = `user=${user}`;
+    location.reload();
+  });
+
+  // Start up app
+  (async () => {
+    const response = await fetch(USERS_ENDPOINT);
+    let error;
+    ({users, error} = await response.json());
+    if (error) {
+      login.style.display = "block";
+    } else {
+      app.style.display = "block";
+      video.srcObject = await navigator.mediaDevices.getUserMedia({
+        video: true,
+      });
+      cameraStarted = true;
+      video.onloadedmetadata = video.play;
+      await refreshMemes();
+    }
+  })();
+
+  const refreshMemes = async () => {
+    const response = await fetch(USERS_ENDPOINT);
+    oldUsers = users;
+    ({users} = await response.json());
+
+    imageContainer.innerHTML = "";
+    imageContainer.append(...Object.keys(users).map(getImageFromUser));
+    setTimeout(refreshMemes, 2000);
+  };
+</script>
+</body>
+</html>
