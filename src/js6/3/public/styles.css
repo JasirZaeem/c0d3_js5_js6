@@ -1,0 +1,9 @@
+#stars {
+    font-size: 2rem;
+}
+
+.fas {
+    color: yellow;
+    -webkit-text-stroke-width: 3px;
+    -webkit-text-stroke-color: black;
+}

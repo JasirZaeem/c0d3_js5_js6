@@ -31,6 +31,7 @@ const js5_9_router = require("./src/js5/9");
 
 const { router: js6_1_router } = require("./src/js6/1");
 const { resolvers, typeDefs, router: js6_2_router } = require("./src/js6/2");
+const js6_3_router = require("./src/js6/3");
 
 // App
 
@@ -56,5 +57,6 @@ app.use("/js5/9", js5_9_router);
 // 6
 app.use("/js6/1", js6_1_router);
 app.use("/js6/2", js6_2_router);
+app.use("/js6/3", js6_3_router);
 
 module.exports = app;
