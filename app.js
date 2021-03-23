@@ -1,12 +1,20 @@
 const express = require("express");
 const { ApolloServer } = require("apollo-server-express");
+const session = require("express-session");
 
 const app = express();
+app.use(
+  session({
+    secret: "horribly insecure secret",
+    resave: false,
+    saveUninitialized: true,
+    cookie: { sameSite: true },
+  })
+);
 
 app.use("/js5/8", express.json({ limit: "1mb" }));
 app.use("/js5/9", express.json({ limit: "1mb" }));
 app.use(express.json());
-
 // 5
 
 const js5_1_router = require("./src/js5/1");
@@ -21,13 +29,15 @@ const js5_9_router = require("./src/js5/9");
 
 // 6
 
-const { resolvers, typeDefs, router: js6_1_router } = require("./src/js6/1");
+const { router: js6_1_router } = require("./src/js6/1");
+const { resolvers, typeDefs, router: js6_2_router } = require("./src/js6/2");
 
 // App
 
 const server = new ApolloServer({
   typeDefs,
   resolvers,
+  context: ({ req }) => ({ req }),
 });
 
 server.applyMiddleware({ app });
@@ -45,5 +55,6 @@ app.use("/js5/9", js5_9_router);
 
 // 6
 app.use("/js6/1", js6_1_router);
+app.use("/js6/2", js6_2_router);
 
 module.exports = app;
