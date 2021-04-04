@@ -1,21 +1,18 @@
-const Star = ({ active, id }) => (
-  <i data-star-id={id} className={`fa-star ${active ? "fas" : "far"}`} />
-);
-
 const Stars = ({ max = 5, value = 0 }) => {
   const [state, setState] = React.useState({
     rating: value,
-    currentlySelected: 0,
+    currentlySelecting: true,
     selectionEnabled: true,
   });
 
-  const { rating, currentlySelected, selectionEnabled } = state;
+  const { rating, currentlySelecting, selectionEnabled } = state;
 
   const mouseOverHandler = (e) =>
     selectionEnabled &&
     setState({
       ...state,
-      currentlySelected: parseInt(e.target.dataset.starId) || currentlySelected,
+      currentlySelecting: true,
+      rating: parseInt(e.target.dataset.starId) || rating,
     });
 
   return (
@@ -28,28 +25,22 @@ const Stars = ({ max = 5, value = 0 }) => {
         onClick={(e) =>
           setState({
             rating: parseInt(e.target?.dataset.starId) || rating,
-            currentlySelected: 0,
+            currentlySelecting: false,
             selectionEnabled: false,
           })
         }
         onMouseOver={mouseOverHandler}
       >
         {Array.from({ length: max }, (_, i) => (
-          <Star
-            id={i + 1}
+          <i
+            data-star-id={i + 1}
             key={i + 1}
-            active={
-              currentlySelected ? currentlySelected >= i + 1 : rating >= i + 1
-            }
+            className={`fa-star ${rating >= i + 1 ? "fas" : "far"}`}
           />
         ))}
       </div>
       <p>
-        You{" "}
-        {selectionEnabled && currentlySelected
-          ? `are giving ${currentlySelected}`
-          : `have given ${rating}`}{" "}
-        stars!
+        You {currentlySelecting ? "are giving" : "have given"} {rating} stars!
       </p>
     </div>
   );
