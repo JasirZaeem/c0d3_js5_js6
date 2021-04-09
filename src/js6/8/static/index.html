@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta
+          name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0"
+  />
+  <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+  <title>Chat App</title>
+  <link
+          rel="stylesheet"
+          href="https://cdn.jsdelivr.net/npm/water.css@2/out/water.css"
+  />
+
+  <style type="text/css">
+      html,
+      body,
+      #app {
+          height: 100%;
+          width: 100%;
+          margin: 0;
+          padding: 0;
+          max-width: 100%;
+      }
+
+      .flex {
+          display: flex;
+      }
+
+      .flex-row {
+          flex-direction: row;
+      }
+
+      .main > section {
+          background-color: rgba(255, 255, 255, 0.5);
+          flex-grow: 1;
+      }
+
+      #message-form {
+          margin: 1rem;
+      }
+
+      #message-form > input {
+          width: 100%;
+      }
+
+      .message-section {
+          justify-content: space-between;
+          grid-area: m;
+      }
+
+      #app {
+          grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr;
+          grid-template-rows: 1fr 1fr 1fr;
+          padding: 0;
+          margin: 0;
+          grid-template-areas: "r m m m m m" "r m m m m m" "r m m m m m";
+          display: none;
+          width: 100%;
+          height: 100%;
+      }
+
+      #app.active {
+          display: grid;
+      }
+
+      #online-users {
+          grid-area: r;
+          font-weight: bold;
+          font-size: 1rem;
+      }
+
+      #online-users > li::marker {
+          color: greenyellow;
+      }
+
+      #login {
+          width: 100%;
+          height: 100%;
+          justify-content: center;
+          align-items: center;
+          display: none;
+      }
+
+      #app > aside,
+      #app > section {
+          padding: 1rem;
+      }
+
+      #app > section {
+          display: flex;
+          flex-direction: column;
+      }
+
+      #login.active {
+          display: flex;
+      }
+
+      #username-input {
+          margin-top: 1rem;
+      }
+
+      #login-errors {
+          color: orangered;
+          font-family: monospace;
+          font-size: 1.25rem;
+      }
+
+      #messages {
+          list-style: none;
+          padding: 8px;
+          overflow-y: scroll;
+          flex-grow: 1;
+      }
+
+      .message {
+          width: 100%;
+          display: flex;
+          margin: 28px 0;
+          position: relative;
+      }
+
+      .message:before {
+          content: attr(data-user);
+          position: absolute;
+          top: -24px;
+      }
+
+      .message > div {
+          max-width: 60%;
+          padding: 12px;
+          border-radius: 8px;
+      }
+
+      .notification {
+          justify-content: center;
+      }
+
+      .notification > div {
+          width: 100%;
+          background-color: dodgerblue;
+          text-align: center;
+      }
+
+      .notification.joined > div {
+          background-color: greenyellow;
+          color: green;
+          border: solid 2px green;
+      }
+
+      .notification.left > div {
+          background-color: peachpuff;
+          color: red;
+          border: solid 2px red;
+      }
+
+      .incoming {
+          justify-content: flex-start;
+      }
+
+      .incoming:before {
+          left: 10px;
+      }
+
+      .incoming > div {
+          background-color: ghostwhite;
+          color: black;
+      }
+
+      .outgoing {
+          justify-content: flex-end;
+      }
+
+      .outgoing:before {
+          right: 10px;
+      }
+
+      .outgoing > div {
+          background-color: hotpink;
+      }
+  </style>
+</head>
+<body>
+<div id="login" class="active">
+  <form id="login-form">
+    <h2>
+      <label>
+        Username
+        <input id="username-input" placeholder="TheLegend27" />
+      </label>
+    </h2>
+    <button>Login</button>
+    <pre id="login-errors"></pre>
+  </form>
+</div>
+<div id="app">
+  <aside class="online-users">
+    <header><h3>Online Users</h3></header>
+    <ul id="online-users"></ul>
+  </aside>
+  <section class="flex-row message-section">
+    <header><h2>Messages</h2></header>
+    <ol id="messages">
+      <li class="message notification">
+        <div>Enter a message and send</div>
+      </li>
+    </ol>
+    <footer>
+      <form id="message-form" class="flex">
+        <input id="message-input" placeholder="Enter message..." />
+        <button>Send</button>
+      </form>
+    </footer>
+  </section>
+</div>
+<script src="/socket.io/socket.io.js"></script>
+<script>
+  const socket = io();
+
+  const login = document.querySelector("#login");
+  const app = document.querySelector("#app");
+
+  const loginForm = document.querySelector("#login-form");
+  const usernameInput = document.querySelector("#username-input");
+  const loginErrors = document.querySelector("#login-errors");
+
+  const messageForm = document.querySelector("#message-form");
+  const messageInput = document.querySelector("#message-input");
+  const messages = document.querySelector("#messages");
+
+  const onlineUsersList = document.querySelector("#online-users");
+
+  let autoScroll = true;
+
+  const state = {
+    username: null,
+    id: null,
+    onlineUsers: {},
+  };
+
+  // DOM Events
+  messages.addEventListener("scroll", () => {
+    autoScroll =
+      messages.scrollTop + messages.clientHeight >=
+      messages.scrollHeight - 10;
+  });
+
+  loginForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const usernameValue = usernameInput.value.trim();
+    if (usernameValue) {
+      const { error, username, onlineUsers } = await fetch("/js6/8/join", {
+        method: "POST",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ username: usernameValue, id: state.id }),
+      }).then((r) => r.json());
+
+      if (error) {
+        loginErrors.innerText = error;
+      } else {
+        state.username = username;
+        onlineUsers.forEach(addOnlineUser);
+        login.classList.remove("active");
+        app.classList.add("active");
+        messageInput.focus();
+      }
+    }
+  });
+
+  messageForm.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const text = messageInput.value.trim();
+    if (text) {
+      socket.emit("message", {
+        id: state.id,
+        text,
+      });
+      messageInput.value = "";
+    }
+  });
+
+  // Utils
+
+  /**
+   *
+   * @param user - username of message sender
+   * @param text - text content of the message
+   * @param type - type of message, either message or notification
+   * @param source - message source, one of "server", "user", "others"
+   * @param notificationType - required if type is notification, one of "info", "joined", "left"
+   */
+  const addMessage = ({ user, text, type, source, notificationType }) => {
+    const messageLi = document.createElement("li");
+
+    const classes = ["message"];
+    if (type === "notification") {
+      classes.push("notification");
+      switch (notificationType) {
+        case "info": {
+          break;
+        }
+        case "joined": {
+          classes.push("joined");
+          break;
+        }
+        case "left": {
+          classes.push("left");
+          break;
+        }
+      }
+    } else if (type === "message") {
+      classes.push(source === "user" ? "outgoing" : "incoming");
+    }
+
+    messageLi.classList.add(...classes);
+    const messageDiv = document.createElement("div");
+    if (user) {
+      messageLi.dataset.user = user;
+    }
+    messageDiv.innerText = text;
+    messageLi.appendChild(messageDiv);
+    messages.appendChild(messageLi);
+    messages.scrollTop = autoScroll
+      ? messages.scrollHeight
+      : messages.scrollTop;
+  };
+
+  /**
+   *
+   * @param username - username being added
+   */
+  const addOnlineUser = (username) => {
+    const userElement = document.createElement("li");
+    userElement.innerText = username;
+    onlineUsersList.append(userElement);
+    state.onlineUsers[username] = userElement;
+  };
+
+  /**
+   *
+   * @param username - username being removed
+   */
+  const removeOnlineUser = (username) => {
+    state.onlineUsers[username].remove();
+    delete state.onlineUsers[username];
+  };
+
+  // Socket Events
+
+  socket.on("connect", () => {
+    state.id = socket.id;
+  });
+
+  socket.on("message", (msg) => {
+    addMessage({
+      type: "message",
+      source: msg.username === state.username ? "user" : "others",
+      user: msg.username,
+      text: msg.text,
+    });
+  });
+
+  socket.on("joined", (username) => {
+    addMessage({
+      type: "notification",
+      notificationType: "joined",
+      text: `${username} has joined the chat`,
+    });
+    addOnlineUser(username);
+  });
+
+  socket.on("left", (username) => {
+    addMessage({
+      type: "notification",
+      notificationType: "left",
+      text: `${username} has left the chat`,
+    });
+    removeOnlineUser(username);
+  });
+
+  usernameInput.focus();
+</script>
+</body>
+</html>
