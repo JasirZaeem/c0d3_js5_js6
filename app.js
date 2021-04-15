@@ -35,7 +35,7 @@ const js6_3_router = require("./src/js6/3");
 const js6_4_router = require("./src/js6/4");
 //js6_5 is static, see below
 const { resolvers, typeDefs, router: js6_6_router } = require("./src/js6/6");
-
+const js6_7_router = require("./src/js6/7");
 //js6_8 is added in ./server.js
 
 const path = require("path");
@@ -68,5 +68,6 @@ app.use("/js6/3", js6_3_router);
 app.use("/js6/4", js6_4_router);
 app.use("/js6/5", express.static(path.join(__dirname, "src/js6/5")));
 app.use("/js6/6", js6_6_router);
+app.use("/js6/7", js6_7_router);
 
 module.exports = app;
